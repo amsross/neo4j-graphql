@@ -14,5 +14,10 @@
   "license": "ISC",
   "devDependencies": {
     "nodemon": "^1.18.5"
+  },
+  "dependencies": {
+    "apollo-server": "^2.2.2",
+    "neo4j-driver": "^1.7.1",
+    "neo4j-graphql-js": "^1.0.5"
   }
 }
