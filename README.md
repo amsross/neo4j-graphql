@@ -27,3 +27,7 @@
 * [Use `neo4j-graphql-js` To Create A Simple API](https://egghead.io/lessons/egghead-use-neo4j-graphql-js-to-create-a-simple-api) ([code](https://github.com/amsross/neo4j-graphql/tree/use-neo4j-graphql-js-to-create-a-simple-api))
 
     We will learn about `neo4j-graphql-js` and how to leverage it to quickly create a full-featured API backed by Neo4J. We will create a few simple schemas to represent our model.
+
+* [Convert Relational Data to Graph Data for Neo4J](https://egghead.io/lessons/egghead-convert-relational-data-to-graph-data-for-neo4j) ([code](https://github.com/amsross/neo4j-graphql/tree/convert-relational-data-to-graph-data-for-neo4j))
+
+    We will write a simple API scraper to fetch relational data from SWAPI and update it to conform to a graph model for use in Neo4J
