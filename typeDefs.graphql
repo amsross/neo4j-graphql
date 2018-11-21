@@ -1,0 +1,217 @@
+type Film {
+  title: String!
+  episode_id: Int
+  opening_crawl: String
+  director: String
+  producer: String
+  release_date: String
+  characters: [Person] @relation(name: "APPEARED_IN", direction: "IN")
+  created: String
+  edited: String
+}
+
+type Person {
+  name: String!
+  height: String
+  mass: String
+  hair_color: String
+  skin_color: String
+  eye_color: String
+  birth_year: String
+  gender: String
+  films: [Film] @relation(name: "APPEARED_IN", direction: "OUT")
+  homeworld: Planet @relation(name: "HAS_HOMEWORLD", direction: "OUT")
+  species: [Species] @relation(name: "HAS_SPECIES", direction: "OUT")
+  costars: [Person] @cypher(statement: """
+    MATCH (this)-[:APPEARED_IN]->(:Film)<-[:APPEARED_IN]-(costar:Person)
+    RETURN costar
+  """)
+  created: String
+  edited: String
+}
+
+type Planet {
+  name: String!
+  rotation_period: String
+  orbital_period: String
+  diameter: String
+  climate: String
+  gravity: String
+  terrain: String
+  surface_water: String
+  population: String
+  residents: [Person] @relation(name: "HAS_HOMEWORLD", direction: "IN")
+  species: [Species] @cypher(statement: """
+    MATCH (this)<-[:HAS_HOMEWORLD]-(:Person)-[:HAS_SPECIES]->(species:Species)
+    RETURN DISTINCT species
+  """)
+  created: String
+  edited: String
+}
+
+type Species {
+  name: String!
+  classification: String
+  designation: String
+  average_height: String
+  skin_colors: String
+  hair_colors: String
+  eye_colors: String
+  average_lifespan: String
+  language: String
+  members: [Person] @relation(name: "HAS_SPECIES", direction: "IN")
+  homeworlds: [Planet] @cypher(statement: """
+    MATCH (this)<-[:HAS_SPECIES]-(:Person)-[:HAS_HOMEWORLD]->(planet:Planet)
+    RETURN DISTINCT planet
+  """)
+  created: String
+  edited: String
+}
+
+input _FilmInput {
+  title: String!
+  episode_id: Int
+  opening_crawl: String
+  director: String
+  producer: String
+  release_date: String
+  created: String
+  edited: String
+}
+
+input _PersonInput {
+  name: String!
+  height: String
+  mass: String
+  hair_color: String
+  skin_color: String
+  eye_color: String
+  birth_year: String
+  gender: String
+  created: String
+  edited: String
+}
+
+input _PlanetInput {
+  name: String!
+  rotation_period: String
+  orbital_period: String
+  diameter: String
+  climate: String
+  gravity: String
+  terrain: String
+  surface_water: String
+  population: String
+  created: String
+  edited: String
+}
+
+input _SpeciesInput {
+  name: String!
+  classification: String
+  designation: String
+  average_height: String
+  skin_colors: String
+  hair_colors: String
+  eye_colors: String
+  average_lifespan: String
+  language: String
+  created: String
+  edited: String
+}
+
+type PersonSpecies {
+  from: Person
+  to: Species
+}
+
+type PersonPlanet {
+  from: Person
+  to: Planet
+}
+
+type FilmPlanet {
+  from: Planet
+  to: Film
+}
+
+type FilmSpecies {
+  from: Species
+  to: Film
+}
+
+type FilmPerson {
+  from: Person
+  to: Film
+}
+
+type Mutation {
+  MergeFilm(input: _FilmInput!): Film
+    @cypher(statement: """
+            MERGE (film:Film { title: input.title })
+            ON CREATE SET film = input
+            ON MATCH SET film += input
+            RETURN film
+    """)
+  MergePerson(input: _PersonInput!): Person
+    @cypher(statement: """
+            MERGE (person:Person { name: input.name })
+            ON CREATE SET person = input
+            ON MATCH SET person += input
+            RETURN person
+    """)
+  MergeSpecies(input: _SpeciesInput!): Species
+    @cypher(statement: """
+            MERGE (species:Species { name: input.name })
+            ON CREATE SET species = input
+            ON MATCH SET species += input
+            RETURN species
+    """)
+  MergePlanet(input: _PlanetInput!): Planet
+    @cypher(statement: """
+            MERGE (planet:Planet { name: input.name })
+            ON CREATE SET planet = input
+            ON MATCH SET planet += input
+            RETURN planet
+    """)
+
+  MergePersonSpecies(from: _PersonInput!, to: _SpeciesInput!): PersonSpecies
+    @cypher(statement: """
+            MATCH (person:Person { name: $from.name }),
+              (species:Species { name: $to.name })
+            MERGE (person)-[:HAS_SPECIES]->(species)
+            RETURN person, species
+    """)
+
+  MergePersonPlanet(from: _PersonInput!, to: _PlanetInput!): PersonPlanet
+    @cypher(statement: """
+            MATCH (person:Person { name: $from.name }),
+              (planet:Planet { name: $to.name })
+            MERGE (person)-[:HAS_HOMEWORLD]->(planet)
+            RETURN person, planet
+    """)
+
+  MergeFilmPlanet(from: _PlanetInput!, to: _FilmInput!): FilmPlanet
+    @cypher(statement: """
+            MATCH (planet:Planet { name: $from.name }),
+              (film:Film { title: $to.title })
+            MERGE (planet)-[:APPEARED_IN]->(film)
+            RETURN film, planet
+    """)
+
+  MergeFilmSpecies(from: _SpeciesInput!, to: _FilmInput!): FilmSpecies
+    @cypher(statement: """
+            MATCH (species:Species { name: $from.name }),
+              (film:Film { title: $to.title })
+            MERGE (species)-[:APPEARED_IN]->(film)
+            RETURN film, species
+    """)
+
+  MergeFilmPerson(from: _PersonInput!, to: _FilmInput!): FilmPerson
+    @cypher(statement: """
+            MATCH (person:Person { name: $from.name }),
+              (film:Film { title: $to.title })
+            MERGE (person)-[:APPEARED_IN]->(film)
+            RETURN film, person
+    """)
+}
