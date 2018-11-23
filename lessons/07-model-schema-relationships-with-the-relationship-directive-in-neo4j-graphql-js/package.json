@@ -1,0 +1,23 @@
+{
+  "name": "egghead-neo4j-graphql",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "",
+  "scripts": {
+    "docker:build": "docker build --pull . -t egghead-neo4j-graphql",
+    "docker:run": "docker run -e NEO4J_HOST='host.docker.internal' -e NEO4J_USER='neo4j' -e NEO4J_PASS='admin' -p 8000:8000 -it --rm egghead-neo4j-graphql",
+    "docker": "npm run docker:build && npm run docker:run",
+    "start": "nodemon -e js,graphql index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^1.18.5"
+  },
+  "dependencies": {
+    "apollo-server": "^2.2.2",
+    "neo4j-driver": "^1.7.1",
+    "neo4j-graphql-js": "^1.0.5"
+  }
+}
