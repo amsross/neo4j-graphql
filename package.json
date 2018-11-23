@@ -19,7 +19,6 @@
     "apollo-server": "^2.2.2",
     "axios": "^0.18.0",
     "graphql-request": "^1.8.2",
-    "highland": "^3.0.0-beta.7",
     "neo4j-driver": "^1.7.1",
     "neo4j-graphql-js": "^1.0.5"
   }

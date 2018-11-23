@@ -1,44 +1,69 @@
-const h = require('highland')
 const { get } = require('axios')
-const helpers = require('./helpers')
-const { mergeFilm, mergePerson, mergePlanet, mergeSpecies } = helpers
-const { mergeFilmPerson, mergeFilmPlanet, mergeFilmSpecies } = helpers
-const { mergePersonPlanet, mergePersonSpecies } = helpers
+const { request } = require('graphql-request')
 
-const base = 'https://swapi.co/api'
-const cache = new Map()
+const api = 'http://0.0.0.0:8000'
+const swapi = 'https://swapi.co/api'
 
-const fetch = url => {
-  return (cache.has(url) ? h.of(cache.get(url)) : h(get(url)))
-    .tap(x => cache.set(url, x))
-    .flatMap(({ data }) => h([
-      h((data && data.results) ? data.results : [ data ]),
-      (data && data.next) ? fetch(data.next) : h([]),
-    ]).sequence())
+async function main () {
+  const { data: { results: [ person, ...people ] } } = await get(swapi + '/people')
+  const { data: homeworld } = await get(person.homeworld)
+  const { data: species } = await get(person.species[0])
+  const { data: film } = await get(person.films[0])
+
+  const nodeResults = await Promise.all([
+    createPerson(person),
+    createPlanet(homeworld),
+    createSpecies(species),
+    createFilm(film),
+  ])
+
+  const relationshipResults = await Promise.all([
+    addPersonHomeworld(person, homeworld),
+    addPersonSpecies(person, species),
+    addPersonFilms(person, film),
+    addPlanetFilms(homeworld, film),
+    addSpeciesFilms(species, film),
+  ])
+
+  return [ nodeResults, relationshipResults ]
 }
 
-const createAndRelate = (mergeNode, mergeRelationship) => url => fetch(url)
-  .flatMap(node => mergeNode(node)
-    .flatMap(() => mergeRelationship(node)))
+const addPersonHomeworld = (person, planet) => request(api, `mutation addPersonHomeworld($from: _PersonInput!, $to: _PlanetInput!) {
+  AddPersonHomeworld(from: $from, to: $to) { from { name } to { name } }
+}`, { from: { name: person.name }, to: { name: planet.name } })
 
-const getFilms = fetch(base + '/films')
-  .flatMap(film => mergeFilm(film)
-    .flatMap(result => h([
-      h.of(result),
-      h(film.species).flatMap(createAndRelate(mergeSpecies, mergeFilmSpecies(film))),
-      h(film.planets).flatMap(createAndRelate(mergePlanet, mergeFilmPlanet(film))),
-      h(film.characters).flatMap(createAndRelate(mergePerson, mergeFilmPerson(film))),
-    ]).sequence()))
+const addPersonSpecies = (person, species) => request(api, `mutation addPersonSpecies($from: _PersonInput!, $to: _SpeciesInput!) {
+  AddPersonSpecies(from: $from, to: $to) { from { name } to { name } }
+}`, { from: { name: person.name }, to: { name: species.name } })
 
-const getPeople = fetch(base + '/people')
-  .flatMap(person => mergePerson(person)
-    .flatMap(result => h([
-      h.of(result),
-      h.of(person.homeworld).flatMap(createAndRelate(mergePlanet, mergePersonPlanet(person))),
-      h(person.species).flatMap(createAndRelate(mergeSpecies, mergePersonSpecies(person))),
-    ]).sequence()))
+const addPersonFilms = (person, film) => request(api, `mutation addPersonFilms($from: _PersonInput!, $to: _FilmInput!) {
+  AddPersonFilms(from: $from, to: $to) { from { name } to { title } }
+}`, { from: { name: person.name }, to: { title: film.title } })
 
-h([ getFilms, getPeople ])
-  .merge()
-  .errors(err => console.error(err))
-  .each(({ result }) => console.log(result))
+const addPlanetFilms = (planet, film) => request(api, `mutation addPlanetFilms($from: _PlanetInput!, $to: _FilmInput!) {
+  AddPlanetFilms(from: $from, to: $to) { from { name } to { title } }
+}`, { from: { name: planet.name }, to: { title: film.title } })
+
+const addSpeciesFilms = (species, film) => request(api, `mutation addSpeciesFilms($from: _SpeciesInput!, $to: _FilmInput!) {
+  AddSpeciesFilms(from: $from, to: $to) { from { name } to { title } }
+}`, { from: { name: species.name }, to: { title: film.title } })
+
+const createPerson = ({ name }) => request(api, `mutation createPerson($name: String!) {
+  CreatePerson(name: $name) { name }
+}`, { name })
+
+const createPlanet = ({ name }) => request(api, `mutation createPlanet($name: String!) {
+  CreatePlanet(name: $name) { name }
+}`, { name })
+
+const createSpecies = ({ name }) => request(api, `mutation createSpecies($name: String!) {
+  CreateSpecies(name: $name) { name }
+}`, { name })
+
+const createFilm = ({ title }) => request(api, `mutation createFilm($title: String!) {
+  CreateFilm(title: $title) { title }
+}`, { title })
+
+main()
+  .then(console.log)
+  .catch(console.error)
