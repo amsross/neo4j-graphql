@@ -29,23 +29,23 @@ async function main () {
 }
 
 const addPersonHomeworld = (person, planet) => request(api, `mutation addPersonHomeworld($from: _PersonInput!, $to: _PlanetInput!) {
-  AddPersonHomeworld(from: $from, to: $to) { name }
+  AddPersonHomeworld(from: $from, to: $to) { from { name } to { name } }
 }`, { from: { name: person.name }, to: { name: planet.name } })
 
 const addPersonSpecies = (person, species) => request(api, `mutation addPersonSpecies($from: _PersonInput!, $to: _SpeciesInput!) {
-  AddPersonSpecies(from: $from, to: $to) { name }
+  AddPersonSpecies(from: $from, to: $to) { from { name } to { name } }
 }`, { from: { name: person.name }, to: { name: species.name } })
 
 const addPersonFilms = (person, film) => request(api, `mutation addPersonFilms($from: _PersonInput!, $to: _FilmInput!) {
-  AddPersonFilms(from: $from, to: $to) { name }
+  AddPersonFilms(from: $from, to: $to) { from { name } to { title } }
 }`, { from: { name: person.name }, to: { title: film.title } })
 
 const addPlanetFilms = (planet, film) => request(api, `mutation addPlanetFilms($from: _PlanetInput!, $to: _FilmInput!) {
-  AddPlanetFilms(from: $from, to: $to) { name }
+  AddPlanetFilms(from: $from, to: $to) { from { name } to { title } }
 }`, { from: { name: planet.name }, to: { title: film.title } })
 
 const addSpeciesFilms = (species, film) => request(api, `mutation addSpeciesFilms($from: _SpeciesInput!, $to: _FilmInput!) {
-  AddSpeciesFilms(from: $from, to: $to) { name }
+  AddSpeciesFilms(from: $from, to: $to) { from { name } to { title } }
 }`, { from: { name: species.name }, to: { title: film.title } })
 
 const createPerson = ({ name }) => request(api, `mutation createPerson($name: String!) {
