@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "apollo-server": "^2.14.2",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "graphql-request": "^1.8.2",
     "neo4j-driver": "^1.7.1",
     "neo4j-graphql-js": "^1.0.5"
